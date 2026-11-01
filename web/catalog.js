@@ -71,16 +71,79 @@ const rows=[
 'wallThin|interior|Перегородка — 12 см|2,2,0.12|box|1.2',
 'doorframeThin|interior|Проход с проёмом — 12 см|2,2.4,0.12|doorframe|1.1',
 'windowframeThin|interior|Оконная рама — 12 см|2,1.8,0.12|windowframe|0.9',
+
+'keel4|frame|Силовой киль 4 м|0.45,0.45,4|box|2',
+'hullNose|armor|Корабельный острый нос|2,0.36,3|spear|2.4',
+'hullNoseWide|armor|Широкая носовая секция|4,0.4,4|spear|4.8',
+'hullCore|armor|Кормовая секция 2×4|2,0.5,4|chamfer|5.4',
+'hullWide|armor|Бронеобшивка корпуса 4×4|4,0.5,4|chamfer|9',
+'hullShoulder|armor|Переход корпуса к крылу|4,0.24,3|shoulder|3.7',
+'wingBladeL|armor|Стреловидное крыло левое|4,0.14,3|wingBladeL|2.9',
+'wingBladeR|armor|Стреловидное крыло правое|4,0.14,3|wingBladeR|2.9',
+'wingLongL|armor|Удлинённое крыло левое|5,0.14,4|wingBladeL|4',
+'wingLongR|armor|Удлинённое крыло правое|5,0.14,4|wingBladeR|4',
+'engineCowl|armor|Гондола двигателя|1.8,1.6,3.2|nacelle|6',
+'engineMount|frame|Кронштейн двигателя|1,0.5,2|chamfer|2',
+'glassCanopy|armor|Панорамная кабина|1.4,0.7,2.5|spear|2',
+'bridgeLow|armor|Низкий командный мостик|2,0.8,2.5|chamfer|3',
+'armorRail|armor|Ребро жёсткости|0.18,0.16,4|box|0.3',
+'ventPanel|armor|Решётка вентиляции|1,0.15,1.5|chamfer|0.6',
+'hangarEdge|armor|Край открытого ангара|3.8,0.3,1.2|chamfer|3.2',
 ];
 const legacyTypes=new Set(['beam2','beam4','cross2','cross4','joint','pillar','bulkhead','pylon','plate1','plate2','plate4','hull','wedge','widewedge','slope','wingL','wingR','cap','canopy','window','hatch','fin','deck','deck4','wall','door','console','seat','reactor','bunk','engineS','engineL','turret','laser','missile','radar','shield','dock']);
 const modules=rows.map(s=>{const [id,cat,name,dim,shape,mass]=s.split('|');return{id,cat,name,dim:dim.split(',').map(Number),shape,mass:Number(mass),thin:!legacyTypes.has(id)}});
 const byId=Object.fromEntries(modules.map(m=>[m.id,m]));
+// Presets are deliberately EDITABLE assemblies. Row format: [type,x,y,z,yaw,color].
+const WHITE='#edf2f7',LIGHT='#c9d5e1',DARK='#394657',SLATE='#66788a',GLASS='#4489ac',GOLD='#b7a180';
+const frame=(id,x,y,z)=>[id,x,y,z,0,DARK];
+const armor=(id,x,y,z,c=WHITE,yaw=0)=>[id,x,y,z,yaw,c];
+const machine=(id,x,y,z)=>[id,x,y,z,0,DARK];
+const shipFrames={
+  blank:[],
+  scout:[frame('strut4',0,-.55,-1),frame('strut4',0,-.55,3),frame('strutCross',0,-.55,2),frame('strutJoint',0,-.55,5)],
+  fighter:[frame('strut4',0,-.65,-3),frame('strut4',0,-.65,1),frame('strutCross',0,-.65,0),frame('cross4',0,-.65,3),frame('strut2',-2,-.65,4),frame('strut2',2,-.65,4)],
+  frigate:[...[-6,-2,2,6].map(z=>frame('strut4',0,-.85,z)),...[-5,1,6].map(z=>frame('cross4',0,-.85,z)),frame('strut4',-2,-.85,0),frame('strut4',2,-.85,0)],
+  carrier:[...[-9,-5,-1,3,7,11].flatMap(z=>[frame('strut4',-2,-.95,z),frame('strut4',2,-.95,z)]),...[-7,0,9].map(z=>frame('cross4',0,-.95,z))]
+};
 const presets={
  blank:[],
- scout:[['beam4',0,0,0],['cross2',0,0,-1],['cross2',0,0,1],['joint',0,0,2]],
- fighter:[['beam4',0,0,0],['beam2',0,0,-3],['cross4',0,0,-1],['cross4',0,0,1],['joint',-2,0,1],['joint',2,0,1]],
- frigate:[['beam4',0,0,-4],['beam4',0,0,0],['beam4',0,0,4],['cross4',0,0,-4],['cross4',0,0,0],['cross4',0,0,4],['beam4',-2,0,0],['beam4',2,0,0],['pillar',0,1,0]],
- carrier:[['beam4',-3,0,-4],['beam4',3,0,-4],['beam4',-3,0,0],['beam4',3,0,0],['beam4',-3,0,4],['beam4',3,0,4],['cross4',0,0,-4],['cross4',0,0,0],['cross4',0,0,4],['pillar',-3,1,0],['pillar',3,1,0]]
+ scout:[...shipFrames.scout,
+   armor('hullNose',0,.05,-5.5),armor('hullCore',0,.04,-2.1),armor('hullCore',0,.04,1.85),
+   armor('hullShoulder',0,.07,2.8,LIGHT),
+   armor('wingBladeL',-2.4,.06,2.4),armor('wingBladeR',2.4,.06,2.4),
+   armor('glassCanopy',0,.51,-2.25,GLASS),armor('armorRail',-1.1,.34,1.45,SLATE),armor('armorRail',1.1,.34,1.45,SLATE),
+   machine('engineS',0,-.48,5.6),machine('laser',0,.9,1.8)],
+ fighter:[...shipFrames.fighter,
+   armor('hullNose',0,.04,-6.2),armor('hullCore',0,.04,-2.7),armor('hullCore',0,.04,1.2),
+   armor('hullShoulder',0,.08,3.55,LIGHT),
+   armor('wingBladeL',-2.8,.08,1.45),armor('wingBladeR',2.8,.08,1.45),
+   armor('wingLongL',-3.25,.07,3.6),armor('wingLongR',3.25,.07,3.6),
+   armor('glassCanopy',0,.58,-2.75,GLASS),armor('armorRail',-1,.38,-1.35,SLATE),armor('armorRail',1,.38,-1.35,SLATE),
+   armor('ventPanel',-2.3,.22,3.5,SLATE),armor('ventPanel',2.3,.22,3.5,SLATE),
+   machine('engineS',-1.25,-.45,5.7),machine('engineS',1.25,-.45,5.7),
+   machine('laser',-1.55,.56,-1.0),machine('laser',1.55,.56,-1.0)],
+ frigate:[...shipFrames.frigate,
+   armor('hullNoseWide',0,.03,-9),armor('hullWide',0,.02,-5),armor('hullWide',0,.02,-1),
+   armor('hullWide',0,.02,3),armor('hullWide',0,.02,7),
+   armor('hullShoulder',0,.21,5.7,LIGHT),
+   armor('wingBladeL',-3.8,.03,1),armor('wingBladeR',3.8,.03,1),
+   armor('wingLongL',-4.4,.04,5),armor('wingLongR',4.4,.04,5),
+   armor('bridgeLow',0,.72,-3.6,SLATE),armor('glassCanopy',0,1.3,-4.0,GLASS),
+   armor('armorRail',-1.8,.37,-5),armor('armorRail',1.8,.37,-5),
+   machine('engineL',-2,-.65,10.1),machine('engineL',2,-.65,10.1),
+   machine('turret',0,1.12,-.5),machine('laser',-2.7,.7,4.3),machine('laser',2.7,.7,4.3)],
+ carrier:[...shipFrames.carrier,
+   armor('hullNoseWide',0,.02,-11),...[-7,-3,1,5,9].flatMap(z=>[armor('hullWide',-2,.02,z),armor('hullWide',2,.02,z)]),
+   armor('hullNose',-2,.11,-12.5,LIGHT),armor('hullNose',2,.11,-12.5,LIGHT),
+   armor('wingLongL',-5.6,.10,5),armor('wingLongR',5.6,.10,5),
+   armor('hullShoulder',0,.17,10,LIGHT),
+   armor('bridgeLow',2.5,.76,-3.5,SLATE),armor('bridgeLow',2.5,1.25,-1.5,DARK),
+   armor('glassCanopy',2.5,1.75,-4.2,GLASS),
+   armor('hangarEdge',-2,.36,-2,SLATE),armor('hangarEdge',-2,.36,3,SLATE),
+   armor('armorRail',-4.1,.34,-5,SLATE),armor('armorRail',4.1,.34,-5,SLATE),
+   machine('engineL',-3.1,-.65,12.4),machine('engineL',3.1,-.65,12.4),
+   machine('turret',-2,.82,-7.4),machine('turret',2,.82,6.5),machine('laser',-5.6,.58,5.2),machine('laser',5.6,.58,5.2)]
 };
-window.PSB={modules,byId,presets,version:1,maxModules:350,defaultColor:'#edf2f7'};
+
+window.PSB={modules,byId,presets,shipFrames,version:2,maxModules:350,defaultColor:'#edf2f7'};
 })();
