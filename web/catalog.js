@@ -72,7 +72,8 @@ const rows=[
 'doorframeThin|interior|Проход с проёмом — 12 см|2,2.4,0.12|doorframe|1.1',
 'windowframeThin|interior|Оконная рама — 12 см|2,1.8,0.12|windowframe|0.9',
 ];
-const modules=rows.map(s=>{const [id,cat,name,dim,shape,mass]=s.split('|');return{id,cat,name,dim:dim.split(',').map(Number),shape,mass:Number(mass)}});
+const legacyTypes=new Set(['beam2','beam4','cross2','cross4','joint','pillar','bulkhead','pylon','plate1','plate2','plate4','hull','wedge','widewedge','slope','wingL','wingR','cap','canopy','window','hatch','fin','deck','deck4','wall','door','console','seat','reactor','bunk','engineS','engineL','turret','laser','missile','radar','shield','dock']);
+const modules=rows.map(s=>{const [id,cat,name,dim,shape,mass]=s.split('|');return{id,cat,name,dim:dim.split(',').map(Number),shape,mass:Number(mass),thin:!legacyTypes.has(id)}});
 const byId=Object.fromEntries(modules.map(m=>[m.id,m]));
 const presets={
  blank:[],
