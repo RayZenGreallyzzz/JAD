@@ -1,7 +1,7 @@
 /* Small offline 3D geometry engine; no network dependencies. */
 (function(){'use strict';
 const V=(x=0,y=0,z=0)=>[x,y,z],add=(a,b)=>a.map((n,i)=>n+b[i]),sub=(a,b)=>a.map((n,i)=>n-b[i]),dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const n=Math.hypot(...a)||1;return a.map(x=>x/n)},rot=(a,y)=>[a[0]*Math.cos(y)+a[2]*Math.sin(y),a[1],-a[0]*Math.sin(y)+a[2]*Math.cos(y)];
-function mesh(shape,size){const [w,h,d]=size,[x,y,z]=size.map(v=>v/2),verts=[[-x,-y,-z],[x,-y,-z],[x,y,-z],[-x,y,-z],[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]];
+function mesh(shape,size){const [w,h,d]=size,[x,y,z]=size.map(v=>v/2);let verts=[[-x,-y,-z],[x,-y,-z],[x,y,-z],[-x,y,-z],[-x,-y,z],[x,-y,z],[x,y,z],[-x,y,z]];
  let faces=[[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]];
  if(shape==='wedge'||shape==='fin'){verts[2][1]=-y;verts[3][1]=-y;faces=[[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]];}
  if(shape==='wingL'||shape==='wingR'){const s=shape==='wingL'?1:-1;for(const v of verts){if(s*v[0]>0)v[2]*=.25;}}
