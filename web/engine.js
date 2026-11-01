@@ -5,12 +5,40 @@ function mesh(shape,size){const [w,h,d]=size,[x,y,z]=size.map(v=>v/2);let verts=
  let faces=[[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]];
  if(shape==='wedge'||shape==='fin'){verts[2][1]=-y;verts[3][1]=-y;faces=[[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[3,7,6,2],[0,1,5,4]];}
  if(shape==='wingL'||shape==='wingR'){const s=shape==='wingL'?1:-1;for(const v of verts){if(s*v[0]>0)v[2]*=.25;}}
- if(shape==='cylinder'){verts=[];faces=[];const n=10;for(let i=0;i<n;i++){let a=i*Math.PI*2/n;verts.push([Math.cos(a)*x,-y,Math.sin(a)*z]);verts.push([Math.cos(a)*x,y,Math.sin(a)*z]);}for(let i=0;i<n;i++){let j=(i+1)%n;faces.push([i*2,j*2,j*2+1,i*2+1]);}faces.push(Array.from({length:n},(_,i)=>2*(n-1-i)));faces.push(Array.from({length:n},(_,i)=>i*2+1));}
+ if(['taper','triangle','bevel'].includes(shape)){
+  const outline=shape==='taper'?[[-x*.22,-z],[x*.22,-z],[x,z],[-x,z]]:
+    shape==='triangle'?[[-x,-z],[x,z],[-x,z]]:
+    [[-x,-z],[x*.45,-z],[x,z*.30],[x,z],[-x,z]];
+  // Remove zero-area collinear points; all profiles are convex and triangulate as fans.
+  verts=[];faces=[];
+  for(const [a,b] of outline){verts.push([a,-y,b]);verts.push([a,y,b]);}
+  const n=outline.length;
+  faces.push(Array.from({length:n},(_,i)=>2*i));
+  faces.push(Array.from({length:n},(_,i)=>2*(n-1-i)+1));
+  for(let i=0;i<n;i++){const j=(i+1)%n;faces.push([2*i,2*i+1,2*j+1,2*j]);}
+ }
+  if(shape==='cylinder'){verts=[];faces=[];const n=10;for(let i=0;i<n;i++){let a=i*Math.PI*2/n;verts.push([Math.cos(a)*x,-y,Math.sin(a)*z]);verts.push([Math.cos(a)*x,y,Math.sin(a)*z]);}for(let i=0;i<n;i++){let j=(i+1)%n;faces.push([i*2,j*2,j*2+1,i*2+1]);}faces.push(Array.from({length:n},(_,i)=>2*(n-1-i)));faces.push(Array.from({length:n},(_,i)=>i*2+1));}
  return {verts,faces};}
 const GEOM=new Map();function geo(s,d){let k=s+d.join('/');if(!GEOM.has(k))GEOM.set(k,mesh(s,d));return GEOM.get(k)}
 function parts(m){const d=PSB.byId[m.type],S=d.dim,p=[{shape:d.shape,dim:S,at:V(),color:m.color}];
  if(m.type==='turret'||m.type==='laser'){p.length=0;p.push({shape:'cylinder',dim:[S[0]*.85,.3,S[2]*.85],at:[0,-.35,0],color:m.color});p.push({shape:'cylinder',dim:[S[0]*.6,.55,S[2]*.6],at:[0,.12,0],color:m.color,spin:true});p.push({shape:'box',dim:[S[0]*.17,.18,S[2]*.85],at:[0,.28,-S[2]*.55],color:m.type==='laser'?'#5dd5ee':'#65717e',spin:true});}
  if(['engineS','engineL'].includes(m.type)){p.push({shape:'cylinder',dim:[S[0]*.76,S[1]*.76,.4],at:[0,0,S[2]*.46],color:'#394b62',rotateX:Math.PI/2});p.push({shape:'cylinder',dim:[S[0]*.45,S[1]*.45,.1],at:[0,0,S[2]*.57],color:'#64cefa',rotateX:Math.PI/2});}
+ if(m.type==='corner2'){
+  p.length=0;
+  const a=S[0]*.20,b=S[2]*.20;
+  p.push({shape:'box',dim:[S[0],S[1],b],at:[0,0,(S[2]-b)/2],color:m.color});
+  p.push({shape:'box',dim:[a,S[1],S[2]-b],at:[-(S[0]-a)/2,0,-b/2],color:m.color});
+ }
+ if(m.type==='doorframeThin'){
+  p.length=0;const jamb=.27,head=.24;
+  for(const s of [-1,1])p.push({shape:'box',dim:[jamb,S[1]-head,S[2]],at:[s*(S[0]-jamb)/2,-head/2,0],color:m.color});
+  p.push({shape:'box',dim:[S[0],head,S[2]],at:[0,(S[1]-head)/2,0],color:m.color});
+ }
+ if(m.type==='windowframeThin'){
+  p.length=0;const rail=.18;
+  for(const s of [-1,1])p.push({shape:'box',dim:[rail,S[1]-rail*2,S[2]],at:[s*(S[0]-rail)/2,0,0],color:m.color});
+  for(const s of [-1,1])p.push({shape:'box',dim:[S[0],rail,S[2]],at:[0,s*(S[1]-rail)/2,0],color:m.color});
+ }
  if(m.type==='canopy')p.push({shape:'wedge',dim:[S[0]*.67,S[1]*.43,S[2]*.72],at:[0,.4,0],color:'#4c89a6'});
  if(m.type==='window')p.push({shape:'box',dim:[S[0]*.77,S[1]*.55,.08],at:[0,.1,-S[2]*.55],color:'#4b97b2'});
  if(m.type==='reactor')p.push({shape:'cylinder',dim:[S[0]*.5,S[1]*1.1,S[2]*.5],at:[0,0,0],color:'#67cdda'});
