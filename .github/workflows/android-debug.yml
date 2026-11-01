@@ -39,6 +39,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Keep debug signing identity across Android builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: jad-android-debug-signing-v03
       - name: Build APK
         run: gradle --no-daemon :app:assembleDebug
       - name: Upload installable APK
