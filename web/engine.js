@@ -19,7 +19,7 @@ function rgb(s){let n=parseInt((s||'#eeeeee').slice(1),16);return[(n>>16)&255,(n
 function hex(a){return '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('')}
 function tint(col,amount){return hex(rgb(col).map(v=>v*amount))}
 function triangles(modules,clock=0){let out=[];for(const m of modules){let d=PSB.byId[m.type];if(!d)continue;let yaw=m.yaw*Math.PI/180;
- for(const p of parts(m)){const g=geo(p.shape,p.dim),spin=p.spin?Math.sin(clock*.0006+m.id)*.4:0;for(const f of g.faces){const transformed=f.map(k=>{let v=g.verts[k];if(p.rotateX){const cs=Math.cos(p.rotateX),sn=Math.sin(p.rotateX);v=[v[0],v[1]*cs-v[2]*sn,v[1]*sn+v[2]*cs]}let base=add(v,p.at);return add(rot(p.spin?rot(base,spin):base,yaw),[m.x,m.y,m.z])});for(let k=1;k<transformed.length-1;k++)out.push({p:[transformed[0],transformed[k],transformed[k+1]],color:p.color,id:m.id,kind:d.cat,rotor:!!p.spin,module:m})}}}}
+ for(const p of parts(m)){const g=geo(p.shape,p.dim),spin=p.spin?Math.sin(clock*.0006+m.id)*.4:0;for(const f of g.faces){const transformed=f.map(k=>{let v=g.verts[k];if(p.rotateX){const cs=Math.cos(p.rotateX),sn=Math.sin(p.rotateX);v=[v[0],v[1]*cs-v[2]*sn,v[1]*sn+v[2]*cs]}let base=add(v,p.at);return add(rot(p.spin?rot(base,spin):base,yaw),[m.x,m.y,m.z])});for(let k=1;k<transformed.length-1;k++)out.push({p:[transformed[0],transformed[k],transformed[k+1]],color:p.color,id:m.id,kind:d.cat,rotor:!!p.spin,module:m})}}}
  return out;}
 class View {
  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.yaw=.78;this.pitch=.43;this.zoom=27;this.target=[0,0,0];this.hit=[];this.visible=[];this.setSize()}
