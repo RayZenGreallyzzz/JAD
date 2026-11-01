@@ -7,14 +7,15 @@ const { TextEncoder } = require('node:util');
 
 const root = path.resolve(__dirname, '..', 'web');
 const ctx = { window: {}, TextEncoder, Blob, console, Float32Array, Uint8Array, DataView, Math, Map, Set, ArrayBuffer };
-for (const file of ['catalog.js', 'engine.js']) {
+for (const file of ['catalog.js', 'snap.js', 'engine.js']) {
     vm.runInNewContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
     ctx.PSB = ctx.window.PSB;
 }
 const { PSB, PSBEngine } = { PSB: ctx.window.PSB, PSBEngine: ctx.window.PSBEngine };
 
-test('catalog contains 38 functional module families', () => {
-    assert.equal(PSB.modules.length, 38);
+test('catalog contains 68 module types including 30 thin modules', () => {
+    assert.equal(PSB.modules.length, 68);
+    assert.equal(PSB.modules.filter(m => m.thin).length, 30);
     assert.deepEqual(new Set(PSB.modules.map(m => m.cat)), new Set(['frame', 'armor', 'interior', 'system']));
     for (const m of PSB.modules) {
         assert.ok(m.dim.every(n => n > 0 && Number.isFinite(n)), m.id);
@@ -63,4 +64,33 @@ test('GLB header, materials and separately named movable turret nodes', async ()
     assert.ok(doc.nodes.some(node => node.name.startsWith('STATIC_HULL')));
     assert.ok(doc.nodes.some(node => node.name === 'SYSTEM_turret_2'));
     assert.ok(doc.nodes.some(node => node.name === 'MOVABLE_PIVOT_2'));
+});
+
+test('thin cladding is 5-15 cm thick and advanced hull shapes are separate meshes', () => {
+    assert.equal(PSB.byId.skin05.dim[1], .05);
+    assert.equal(PSB.byId.skin2.dim[1], .12);
+    assert.equal(PSB.byId.armor15.dim[1], .15);
+    for (const id of ['taper', 'triangle', 'bevel']) {
+        const tris = PSBEngine.triangles([{ id: 1, type: ({ taper: 'nose2', triangle: 'tri2', bevel: 'bevel2' })[id], x: 0, y: 0, z: 0, yaw: 0, color: '#ffffff' }]);
+        assert.ok(tris.length >= 8, id);
+        assert.ok(tris.every(t => t.p.flat().every(Number.isFinite)), id);
+    }
+    for (const id of ['doorframeThin', 'windowframeThin']) {
+        assert.ok(PSBEngine.triangles([{ id: 1, type: id, x: 0, y: 0, z: 0, yaw: 0, color: '#ffffff' }]).length > 20, id);
+    }
+});
+
+test('precise face snapping handles 50 mm modules and rotated side panels', () => {
+    const snap = ctx.window.PSBSnap;
+    const bottom = { type: 'skin05', yaw: 0, x: 0, y: 0, z: 0 };
+    const top = { type: 'skin1', yaw: 0, x: 0, y: .085, z: 0 };
+    assert.ok(Math.abs(snap.facePosition(bottom, top, 'py')[1] - .085) < .00001);
+    assert.equal(snap.intersects(bottom, top), false);
+    assert.equal(snap.intersects(bottom, { ...top, y: .06 }), true);
+    const parent = { type: 'side4', yaw: 90, x: 0, y: 0, z: 0 };
+    const added = { type: 'side2', yaw: 90 };
+    const [x, y, z] = snap.facePosition(parent, added, 'px');
+    assert.equal(x, .12);
+    assert.equal(y, 0);
+    assert.equal(z, 0);
 });
