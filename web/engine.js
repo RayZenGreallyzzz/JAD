@@ -100,7 +100,7 @@ class View {
  const source=baked||triangles(modules.filter(m=>PSB.byId[m.type].cat!=='system'),clock);
  const systemFaces=triangles(modules.filter(m=>PSB.byId[m.type].cat==='system'),clock);
  for(const f of [...source,...systemFaces]){const p=f.p.map(v=>this.project(v));if(p.some(x=>!x))continue;const n=norm(cross(sub(f.p[1],f.p[0]),sub(f.p[2],f.p[0]))),ctr=f.p.reduce((a,v)=>add(a,v),[0,0,0]).map(v=>v/3),eye=add(this.target,[this.zoom*Math.sin(this.yaw)*Math.cos(this.pitch),this.zoom*Math.sin(this.pitch),this.zoom*Math.cos(this.yaw)*Math.cos(this.pitch)]);if(dot(n,sub(eye,ctr))<=0)continue;polys.push({p,depth:p.reduce((s,v)=>s+v[2],0)/3,color:tint(f.color,.56+Math.max(0,dot(n,norm([.6,.85,.3])))*.45),id:f.id});}
- polys.sort((a,b)=>b.depth-a.depth);this.hit=[];for(const f of polys){c.beginPath();c.moveTo(f.p[0][0],f.p[0][1]);for(const p of f.p.slice(1))c.lineTo(p[0],p[1]);c.closePath();c.fillStyle=f.color;c.fill();c.lineWidth=f.id===selected?2.8:.7;c.strokeStyle=f.id===selected?'#6ce9ff':'#172536';c.stroke();this.hit.push(f)}
+ polys.sort((a,b)=>b.depth-a.depth);this.hit=[];for(const f of polys){c.beginPath();c.moveTo(f.p[0][0],f.p[0][1]);for(const p of f.p.slice(1))c.lineTo(p[0],p[1]);c.closePath();c.fillStyle=f.color;c.fill();if(f.id===selected){c.lineWidth=2;c.strokeStyle='#6ce9ff';c.stroke()}this.hit.push(f)}
  // Floor axes and selected outline are intentionally lightweight for tablets.
  for(const s of shots){let p=this.project(s.p),q=this.project(add(s.p,[0,0,-5]));if(!p||!q)continue;c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.lineWidth=3;c.strokeStyle='#78efff';c.stroke()}
  }
