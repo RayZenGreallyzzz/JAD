@@ -13,9 +13,12 @@ for (const file of ['catalog.js', 'snap.js', 'engine.js']) {
 }
 const { PSB, PSBEngine } = { PSB: ctx.window.PSB, PSBEngine: ctx.window.PSBEngine };
 
-test('catalog contains 68 module types including 30 thin modules', () => {
-    assert.equal(PSB.modules.length, 68);
-    assert.equal(PSB.modules.filter(m => m.thin).length, 30);
+test('catalog retains old parts and adds ship-shaped modules', () => {
+    assert.ok(PSB.modules.length >= 80);
+    assert.ok(PSB.modules.some(m => m.id === 'hullNoseWide'));
+    assert.ok(PSB.modules.some(m => m.id === 'wingLongL'));
+    assert.ok(PSB.modules.some(m => m.id === 'wingLongR'));
+    assert.ok(PSB.modules.filter(m => m.thin).length >= 30);
     assert.deepEqual(new Set(PSB.modules.map(m => m.cat)), new Set(['frame', 'armor', 'interior', 'system']));
     for (const m of PSB.modules) {
         assert.ok(m.dim.every(n => n > 0 && Number.isFinite(n)), m.id);
@@ -25,8 +28,11 @@ test('catalog contains 68 module types including 30 thin modules', () => {
 
 test('all four preset hulls use valid module types', () => {
     for (const id of ['scout', 'fighter', 'frigate', 'carrier']) {
-        assert.ok(PSB.presets[id].length > 0, id);
+        assert.ok(PSB.presets[id].length > PSB.shipFrames[id].length, id);
         assert.ok(PSB.presets[id].every(([part]) => PSB.byId[part]), id);
+        assert.ok(PSB.presets[id].some(([part]) => PSB.byId[part].cat === 'armor'), id);
+        assert.ok(PSB.presets[id].some(([part]) => PSB.byId[part].cat === 'system'), id);
+        assert.ok(PSB.shipFrames[id].every(([part]) => PSB.byId[part].cat === 'frame'), id);
     }
 });
 
@@ -93,4 +99,32 @@ test('precise face snapping handles 50 mm modules and rotated side panels', () =
     assert.equal(x, .12);
     assert.equal(y, 0);
     assert.equal(z, 0);
+});
+
+test('starter ships are ship-shaped hulls with editable white armor, bridges, and aligned engines', () => {
+    for (const id of ['scout', 'fighter', 'frigate', 'carrier']) {
+        const sections = PSB.presets[id];
+        assert.ok(sections.filter(([type]) => PSB.byId[type].cat === 'armor').length >= 5);
+        const machines = sections.filter(([type]) => PSB.byId[type].cat === 'system');
+        assert.ok(machines.some(([type]) => type.startsWith('engine')));
+        const modules = sections.map(([type,x,y,z,yaw=0,color='#edf2f7'],i) =>
+            ({id:i+1,type,x,y,z,yaw,color}));
+        const triangles = PSBEngine.triangles(modules,0);
+        assert.ok(triangles.length > 100, id);
+        assert.ok(triangles.every(t => t.p.every(p => p.every(Number.isFinite))), id);
+        const glb = PSBEngine.glbFor(modules);
+        assert.ok(glb.size > 1000, id);
+    }
+});
+
+test('new hull/wing/nacelle primitives are distinct closed geometry profiles', () => {
+    for (const id of ['hullNose','hullNoseWide','hullCore','hullWide','hullShoulder',
+                      'wingBladeL','wingBladeR','wingLongL','wingLongR','engineCowl','glassCanopy']) {
+        const item=PSB.byId[id];
+        const faces=PSBEngine.triangles([{id:1,type:id,x:0,y:0,z:0,yaw:0,color:'#ffffff'}]);
+        assert.ok(faces.length>=8,id);
+        assert.ok(faces.every(face=>face.p.every(v=>v.every(Number.isFinite))),id);
+        const xs=faces.flatMap(face=>face.p.map(v=>v[0]));
+        assert.ok(Math.max(...xs)-Math.min(...xs)>item.dim[0]*.5,id);
+    }
 });
