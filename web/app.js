@@ -28,7 +28,15 @@ function recolor(all){const list=project.modules.filter(m=>all?D.byId[m.type].ca
 function rebake(){bakedCache=project.baked?E.triangles(project.modules.filter(m=>D.byId[m.type].cat!=='system')):null}
 function bake(){if(project.baked)return;let before=data();project.baked=true;rebake();mark(before);toast('Статика закеширована; исходные модули сохранены')}
 function unbake(){if(!project.baked)return;let before=data();project.baked=false;rebake();mark(before);toast('Редактирование корпуса восстановлено')}
-function download(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000)}
+async function download(blob,name){
+ if(window.PhoenixNative&&typeof window.PhoenixNative.beginFile==='function'){
+  const native=window.PhoenixNative,token=native.beginFile(name,blob.type||'application/octet-stream');if(!token){toast('Нет доступа к папке Downloads','error');return}
+  try{const chunkSize=24*1024;for(let at=0;at<blob.size;at+=chunkSize){const piece=blob.slice(at,at+chunkSize);const b64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(piece)});if(!native.appendChunk(token,b64))throw Error('Запись файла прервана')}
+   if(!native.finishFile(token))throw Error('Не удалось завершить сохранение');toast('Файл записан в Downloads/PhoenixStarshipBuilder');return
+  }catch(err){native.abortFile(token);toast('Ошибка Android-сохранения: '+err.message,'error');return}
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),12000);
+}
 function exportJson(){download(new Blob([JSON.stringify(project,null,2)],{type:'application/json'}),'PhoenixShip_project.json');toast('Проект JSON сохранён')}
 function importJson(e){let file=e.target.files?.[0];e.target.value='';if(!file)return;let reader=new FileReader();reader.onload=()=>{try{loadSnapshot(String(reader.result));history=[];future=[];saveSoon();toast('Импортированы '+project.modules.length+' модулей')}catch(err){toast(err.message,'error')}};reader.readAsText(file)}
 function exportGLB(){if(!project.modules.length){toast('Сначала добавьте модули','error');return}try{download(E.glbFor(project.modules),'PhoenixShip_model.glb');toast('GLB создан; оружие экспортировано отдельными узлами')}catch(err){toast('Экспорт не удался: '+err.message,'error')}}
