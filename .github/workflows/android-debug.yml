@@ -5,6 +5,7 @@ on:
     paths:
       - 'app/**'
       - 'web/**'
+      - 'tests/**'
       - '*.gradle'
       - 'gradle.properties'
       - '.github/workflows/android-debug.yml'
