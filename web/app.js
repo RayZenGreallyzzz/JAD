@@ -18,7 +18,7 @@ function fitView(){
  if(!project.modules.length){view.zoom=27;view.target=[0,0,0];return}
  let mins=[Infinity,Infinity,Infinity],maxs=[-Infinity,-Infinity,-Infinity];
  for(const m of project.modules){const dim=window.PSBSnap.worldDims(m.type,m.yaw);['x','y','z'].forEach((k,i)=>{mins[i]=Math.min(mins[i],m[k]-dim[i]/2);maxs[i]=Math.max(maxs[i],m[k]+dim[i]/2)})}
- view.target=mins.map((v,i)=>(v+maxs[i])/2);view.zoom=Math.min(110,Math.max(19,Math.max(maxs[0]-mins[0],maxs[2]-mins[2])*2.2));
+ view.target=mins.map((v,i)=>(v+maxs[i])/2);view.zoom=Math.min(110,Math.max(19,Math.max(maxs[0]-mins[0],maxs[2]-mins[2])*1.55));
 }
 function preset(kind){let before=data();project=blank();project.title=({scout:'Разведчик',fighter:'Перехватчик',frigate:'Фрегат',carrier:'Носитель',blank:'Новый корабль'})[kind]||'Корабль';project.modules=(($('demo').checked?D.presets:D.shipFrames)[kind]||[]).map(([t,x,y,z,yaw=0,color])=>module(t,x,y,z,yaw,color||D.defaultColor));selected=null;active=false;shipOffset=[0,0,0];fitView();rebake();mark(before);toast(($('demo').checked?'Собран редактируемый образец: ':'Создан каркас: ')+project.modules.length+' модулей')}
 function dims(m){return window.PSBSnap.worldDims(m.type,m.yaw)}
